@@ -165,15 +165,13 @@ def create_app():
     @app.route("/edit_project/<project_id>/add_step", methods=["POST"])
     def add_step(project_id):
         try:
-            project_id = ObjectId(project_id)  # Преобразовываем project_id в ObjectId
+            project_id = ObjectId(project_id)
         except Exception as e:
-            # Обработка ошибки, если project_id неверного формата
-            return "Invalid project_id", 400
+            return jsonify({"status": "error", "message": "Invalid project_id"}), 400
 
         step_description = request.form.get("step_description")
-        section = request.form.get("section")  # Получаем значение раздела из формы
+        section = request.form.get("section")
 
-        # Определите, в какой раздел добавить шаг
         section_field = f"{section}_steps"
 
         try:
@@ -182,14 +180,12 @@ def create_app():
                 {"$push": {section_field: step_description}}
             )
             if result.modified_count == 0:
-                # Если ни одна запись не была изменена, возможно, нет проекта с таким project_id
-                return "Project not found", 404
+                return jsonify({"status": "error", "message": "Project not found"}), 404
         except Exception as e:
-            # Обработка других ошибок, например, проблем с базой данных
             print("Error:", e)
-            return "An error occurred", 500
+            return jsonify({"status": "error", "message": "An error occurred"}), 500
 
-        return redirect(url_for("edit_project", project_id=project_id, current_section=section))
+        return jsonify({"status": "success", "message": "Step added successfully"})
 
 
     @app.route("/edit_project/<project_id>/delete_step", methods=["POST"])
@@ -197,25 +193,30 @@ def create_app():
         try:
             project_id = ObjectId(project_id)
         except Exception as e:
-            return "Invalid project_id", 400
+            return jsonify({"status": "error", "message": "Invalid project_id"}), 400
 
         step_to_delete = request.form.get("step_to_delete")
         section = request.form.get("section")
         project = app.db.projects.find_one({"_id": project_id})
-        
+
+        if not project:
+            return jsonify({"status": "error", "message": "Project not found"}), 404
+
         try:
             result = app.db.projects.update_one(
                 {"_id": project_id},
                 {"$pull": {f"{section}_steps": step_to_delete}}
             )
             if result.modified_count == 0:
-                return "Project not found", 404
+                return jsonify({"status": "error", "message": "Step not found"}), 404
         except Exception as e:
             print("Error:", e)
-            return "An error occurred", 500
+            return jsonify({"status": "error", "message": "An error occurred"}), 500
 
-        # После успешного удаления шага, перенаправьтесь обратно в текущий раздел
-        return redirect(url_for("edit_project", project_id=project_id, current_section=section))
+        # Получите обновленный список шагов после удаления
+        updated_certification_steps = app.db.projects.find_one({"_id": project_id})[f"{section}_steps"]
+
+        return jsonify({"status": "success", "message": "Step deleted successfully", "updated_certification_steps": updated_certification_steps})
 
 
     #----------------------------------------------------------------
