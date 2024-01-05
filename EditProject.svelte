@@ -84,7 +84,7 @@
         }
     }
 
-    //кдаление шага
+    //удаление шага
     onMount(() => {
         // Get project_id and navigational_lights_steps from the URL or wherever you are storing them
         // For example, you can use the Svelte router or pass them as props

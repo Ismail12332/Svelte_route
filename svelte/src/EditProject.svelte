@@ -68,7 +68,7 @@
     // ... (ваш существующий код)
 
     // Обновленная функция addStep, которая добавляет шаг и обновляет соответствующий подраздел
-    async function addStep(event) {
+    async function addStep(event, sectionName) {
         event.preventDefault();
 
         const stepDescription = document.getElementById("step_description").value;
@@ -130,6 +130,9 @@
         }
     }
 
+    $: {
+        console.log("Project data:", $project);
+    }
     ///Добавление раздела
     async function addSection(event) {
         event.preventDefault();
@@ -146,12 +149,13 @@
             });
 
             if (response.ok) {
-                const data = await response.text();
+                const data = await response.json();  // Parse JSON response
                 console.log("Section added successfully:", data);
                 // Optionally, you can update the project data or refresh the page
                 // based on your application's requirements.
                 // For example, you can call a function to refresh project data.
                 // refreshProjectData();
+                project.set(data.updated_project);
                 closeCreateSectionModal();
             } else {
                 console.error("Failed to add section:", response.statusText);
@@ -177,6 +181,7 @@
             if (response.ok) {
                 const data = await response.json();
                 if (data.status === "success") {
+                    project.set(data.updated_project);
                     // Optionally, you can update the project data or refresh the page
                     // based on your application's requirements.
                     // For example, you can call a function to refresh project data.
@@ -222,25 +227,28 @@
             button.classList.remove('button-clicked');
         });
     }
+    
+    let currentOpenSection = "";
+
 
     function showSubsections(sectionName) {
         closeAllSections();
+
         var subsectionsDiv = document.getElementById("subsections-" + sectionName);
-
-        // Сбросьте цвет предыдущей кнопки
-        resetButtonColor(sectionName);
-        
-
-        if (subsectionsDiv.style.display === "none") {
-            subsectionsDiv.style.display = "block";
-        } else {
-            subsectionsDiv.style.display = "none";
-        }
-
-        // Получите элемент кнопки
         var sectionButton = document.getElementById(sectionName + "-button");
 
-        // Переключите класс кнопки
+        if (currentOpenSection === sectionName) {
+            // Если раздел уже открыт, то закрываем его
+            subsectionsDiv.style.display = "none";
+            currentOpenSection = "";
+        } else {
+            // Открываем выбранный раздел
+            subsectionsDiv.style.display = "block";
+            currentOpenSection = sectionName;
+        }
+
+        // Сбросьте цвет предыдущей кнопки и установите цвет для текущей кнопки
+        resetButtonColor();
         sectionButton.classList.toggle("button-clicked");
     }
 
@@ -619,7 +627,9 @@ function showSafetyEquipmentSections() {
         addStepFormVisible = subsectionName;
     }
 
-    
+    function subsectionsDivStyle(sectionName) {
+        return currentOpenSection && currentOpenSection === sectionName ? "block" : "none";
+    }
 </script>
 
 <style>
@@ -734,7 +744,7 @@ button {
             {#each $project.sections as section (section)}
                 <!-- Button to toggle subsections -->
                 <button id="{ section.name }-button" on:click={() => showSubsections(section.name)}>{ section.name }</button>
-                <div id="subsections-{ section.name }" style="display: none;" class="osnova">
+                <div id="subsections-{ section.name }" style="display: {subsectionsDivStyle(section.name)};" class="osnova">
                     <h1>{ section.name }</h1>
                     <button class="forplus" on:click={() => showCreateSubsectionModal(section.name)}>+</button>
                     <div id="{section.name}-subsections" class="subsections">
@@ -743,7 +753,7 @@ button {
                                 <div class="subsection">
                                     <button on:click={() => showAddStepForm(subsection.name)}>{subsection.name}</button>
                                     {#if addStepFormVisible === subsection.name}
-                                        <form on:submit|preventDefault={() => addStep(subsection.name)}>
+                                        <form on:submit|preventDefault={(event) => addStep(event, subsection.name)}>
                                             <label for="step_description">Step Description:</label>
                                             <input type="text" id="step_description" bind:value={stepDescription}>
                                             <button type="submit">Add Step</button>

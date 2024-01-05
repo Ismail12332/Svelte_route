@@ -251,8 +251,10 @@ def create_app():
         except Exception as e:
             print("Error:", e)
             return "An error occurred", 500
-
-        return redirect(url_for("edit_project", project_id=project_id))
+        updated_project = app.db.projects.find_one({"_id": project_id})
+        updated_project['_id'] = str(updated_project['_id'])
+        
+        return jsonify({"status": "success", "message": "Section added successfully", "updated_project": updated_project})
 
 
     #--удаление раздела
@@ -299,7 +301,10 @@ def create_app():
             print("Error:", e)
             return "An error occurred", 500
 
-        return redirect(url_for("edit_project", project_id=project_id))
+        updated_project = app.db.projects.find_one({"_id": project_id})
+        updated_project['_id'] = str(updated_project['_id'])
+        
+        return jsonify({"status": "success", "message": "Section added successfully", "updated_project": updated_project})
 
     #--удаление подраздела
     @app.route("/edit_project/<project_id>/delete_subsection/<section_name>/<subsection_name>", methods=["POST"])
