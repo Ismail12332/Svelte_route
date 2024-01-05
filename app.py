@@ -184,8 +184,16 @@ def create_app():
         except Exception as e:
             print("Error:", e)
             return jsonify({"status": "error", "message": "An error occurred"}), 500
+        
+        # Получите обновленный проект после добавления шага
+        updated_project = app.db.projects.find_one({"_id": project_id})
 
-        return jsonify({"status": "success", "message": "Step added successfully"})
+        # Преобразуйте ObjectId в строку перед возвратом ответа JSON
+        updated_project["_id"] = str(updated_project["_id"])
+
+        print("Вот твоя поебота!!!!!!!!!!!!!!!!",updated_project)
+
+        return jsonify({"status": "success", "message": "Step added successfully","updated_project": updated_project})
 
 
     @app.route("/edit_project/<project_id>/delete_step", methods=["POST"])
@@ -213,10 +221,13 @@ def create_app():
             print("Error:", e)
             return jsonify({"status": "error", "message": "An error occurred"}), 500
 
-        # Получите обновленный список шагов после удаления
-        updated_certification_steps = app.db.projects.find_one({"_id": project_id})[f"{section}_steps"]
+        # Получите обновленный проект после добавления шага
+        updated_project = app.db.projects.find_one({"_id": project_id})
 
-        return jsonify({"status": "success", "message": "Step deleted successfully", "updated_certification_steps": updated_certification_steps})
+        # Преобразуйте ObjectId в строку перед возвратом ответа JSON
+        updated_project["_id"] = str(updated_project["_id"])
+
+        return jsonify({"status": "success", "message": "Step deleted successfully", "updated_project": updated_project})
 
 
     #----------------------------------------------------------------

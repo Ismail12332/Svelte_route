@@ -8,8 +8,8 @@
 
     const { subscribe } = useParams();
 
-    let certification_steps = [];
-    let purpose_of_survey_steps = [];
+    let certification_steps = writable([]);
+    let purpose_of_survey_steps = writable([]);
 
 
     //Гет запрос на сервер при переходе на страницу
@@ -50,11 +50,18 @@
         }
     }
 
+    // Добавьте вывод в консоль для отслеживания переменных
+    $: {
+        console.log("certification_steps:", certification_steps);
+        console.log("purpose_of_survey_steps:", purpose_of_survey_steps);
+    }
+
 
     //Добавления шага
     $: {
         if ($project) {
             certification_steps = $project.certification_steps || [];
+            purpose_of_survey_steps = $project.purpose_of_survey_steps || [];
         }
     }
 
@@ -80,7 +87,8 @@
                 const data = await response.json();
                 if (data.status === "success") {
                     // Обновляем certification_steps после успешного добавления шага
-                    certification_steps = data.updated_certification_steps;
+                    certification_steps = data.updated_project.certification_steps;
+                    purpose_of_survey_steps = data.updated_project.purpose_of_survey_steps
                     // Очищаем поле ввода после успешного добавления
                     document.getElementById("step_description").value = '';
                 } else {
@@ -109,7 +117,8 @@
                 const data = await response.json();
                 if (data.status === "success") {
                     // Обновите certification_steps после успешного удаления шага
-                    certification_steps = data.updated_certification_steps;
+                    certification_steps = data.updated_project.certification_steps;
+                    purpose_of_survey_steps = data.updated_project.purpose_of_survey_steps
                 } else {
                     console.error("Failed to delete step:", data.message);
                 }
@@ -121,7 +130,131 @@
         }
     }
 
+    ///Добавление раздела
+    async function addSection(event) {
+        event.preventDefault();
+
+        const sectionName = document.getElementById("section_name").value;
+
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/edit_project/${$project._id}/add_section`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `section_name=${encodeURIComponent(sectionName)}`,
+            });
+
+            if (response.ok) {
+                const data = await response.text();
+                console.log("Section added successfully:", data);
+                // Optionally, you can update the project data or refresh the page
+                // based on your application's requirements.
+                // For example, you can call a function to refresh project data.
+                // refreshProjectData();
+                closeCreateSectionModal();
+            } else {
+                console.error("Failed to add section:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Error during add section:", error);
+        }
+    }
+
+
+    let subsectionName = '';
+
+    async function addSubsection(sectionName) {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/edit_project/${$project._id}/add_subsection`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `section_name=${encodeURIComponent(sectionName)}&subsection_name=${encodeURIComponent(subsectionName)}`,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === "success") {
+                    // Optionally, you can update the project data or refresh the page
+                    // based on your application's requirements.
+                    // For example, you can call a function to refresh project data.
+                    // refreshProjectData();
+                    closeCreateSubsectionModal();
+                } else {
+                    console.error("Failed to add subsection:", data.message);
+                }
+            } else {
+                console.error("Failed to add subsection:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Error during add subsection:", error);
+        }
+    }
     /////////////////////////////////////////       Open close section     /////////////////////////////////////////
+
+    ///Модальное окно для создания подразделов
+    let currentSection = ""; // Add this variable
+
+    function showCreateSubsectionModal(sectionName) {
+        console.log("Showing modal for section:", sectionName);
+        currentSection = sectionName; // Set the current section
+        var modal = document.getElementById("createSubsectionModal");
+        modal.style.display = "block";
+    }
+
+    function closeCreateSubsectionModal() {
+        var modal = document.getElementById("createSubsectionModal");
+        modal.style.display = "none";
+        currentSection = ""; // Reset the current section when closing the modal
+    }
+
+    function closeAllSections() {
+        var allSections = document.querySelectorAll('.osnova');
+        allSections.forEach(function (section) {
+            section.style.display = "none";
+        });
+
+        // Сбросьте цвет всех кнопок
+        var allButtons = document.querySelectorAll('.button-clicked');
+        allButtons.forEach(function (button) {
+            button.classList.remove('button-clicked');
+        });
+    }
+
+    function showSubsections(sectionName) {
+        closeAllSections();
+        var subsectionsDiv = document.getElementById("subsections-" + sectionName);
+
+        // Сбросьте цвет предыдущей кнопки
+        resetButtonColor(sectionName);
+        
+
+        if (subsectionsDiv.style.display === "none") {
+            subsectionsDiv.style.display = "block";
+        } else {
+            subsectionsDiv.style.display = "none";
+        }
+
+        // Получите элемент кнопки
+        var sectionButton = document.getElementById(sectionName + "-button");
+
+        // Переключите класс кнопки
+        sectionButton.classList.toggle("button-clicked");
+    }
+
+
+    //Модальное окно добавления раздела
+    function showCreateSectionModal() {
+        var modal = document.getElementById("createSectionModal");
+        modal.style.display = "block";
+    }
+
+    function closeCreateSectionModal() {
+        var modal = document.getElementById("createSectionModal");
+        modal.style.display = "none";
+    }
 
     var currentOpenSubsection = null;
     var currentOpenSubsectionButton = null;
@@ -479,6 +612,14 @@ function showSafetyEquipmentSections() {
     }
 }
 
+    let addStepFormVisible = null;
+    let stepDescription = "";
+
+    function showAddStepForm(subsectionName) {
+        addStepFormVisible = subsectionName;
+    }
+
+    
 </script>
 
 <style>
@@ -487,6 +628,65 @@ function showSafetyEquipmentSections() {
     justify-content: space-evenly;
     margin: 15px;
     width: 92%;
+}
+
+button {
+    margin: 13px;
+    padding: 15px;
+    border-radius: 10%;
+    background-color: #d3be25f2;
+}
+
+.forplus {
+    float: right;
+    margin-right: 9%;
+}
+
+.forosnova {
+    display: flex;
+    justify-content: space-around;
+}
+
+.deck {
+    margin-left: 2%;
+}
+
+.button-clicked {
+    background-color: #14d424; /* Замените на желаемый цвет */
+    color: rgb(0, 0, 0); /* Замените на желаемый цвет текста */
+}
+
+.subsection-button-clicked {
+    background-color: #4CAF50; /* Замените на желаемый цвет */
+    color: white; /* Замените на желаемый цвет текста */
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 </style>
@@ -515,7 +715,49 @@ function showSafetyEquipmentSections() {
         <button id="steering-system-sections-button" on:click={showSteeringSystemSections}>STEERING SYSTEM</button>
         <button id="tankage-sections-button" on:click={showTankageSections}>TANKAGE</button>
         <button id="safety-equipment-sections-button" on:click={showSafetyEquipmentSections}>SAFETY EQUIPMENT</button>
+        <button id="create-section-button" class="forplus" on:click={showCreateSectionModal}>+</button>
+
+        <div id="createSubsectionModal" class="modal">
+            <div class="modal-content">
+                <span class="close" on:click={() => closeCreateSubsectionModal()}>&times;</span>
+                <h2 class="formablack">Create New Subsection</h2>
+                <form on:submit|preventDefault={() => addSubsection(currentSection)}>
+                    <input type="hidden" bind:value={currentSection} />
+                    <label class="formablack" for="subsection_name">Имя подраздела:</label>
+                    <input type="text" bind:value={subsectionName} required>
+                    <button class="formablack" type="submit">Добавить подраздел</button>
+                </form>
+            </div>
+        </div>
+        
+        {#if $project && $project.sections && $project.sections.length > 0}
+            {#each $project.sections as section (section)}
+                <!-- Button to toggle subsections -->
+                <button id="{ section.name }-button" on:click={() => showSubsections(section.name)}>{ section.name }</button>
+                <div id="subsections-{ section.name }" style="display: none;" class="osnova">
+                    <h1>{ section.name }</h1>
+                    <button class="forplus" on:click={() => showCreateSubsectionModal(section.name)}>+</button>
+                    <div id="{section.name}-subsections" class="subsections">
+                        {#if section.subsections && section.subsections.length > 0}
+                            {#each section.subsections as subsection (subsection)}
+                                <div class="subsection">
+                                    <button on:click={() => showAddStepForm(subsection.name)}>{subsection.name}</button>
+                                    {#if addStepFormVisible === subsection.name}
+                                        <form on:submit|preventDefault={() => addStep(subsection.name)}>
+                                            <label for="step_description">Step Description:</label>
+                                            <input type="text" id="step_description" bind:value={stepDescription}>
+                                            <button type="submit">Add Step</button>
+                                        </form>
+                                    {/if}
+                                </div>
+                            {/each}
+                        {/if}
+                    </div>
+                </div>
+            {/each}
+        {/if}
     </div>
+    
     <div class="osnova" style="display: none;" id="introduction-sections">
         <h1 class="forosnova">Introduction sections</h1>
         <button id="certification-button" on:click={() => showSubsection('certification')}>CERTIFICATION</button>
@@ -570,6 +812,21 @@ function showSafetyEquipmentSections() {
         <h1 class="forosnova">Safety equipment sections</h1>
 
     </div>
+
+    <!--Модальное окно добавления раздела-->
+    <div id="createSectionModal" class="modal">
+        <div class="modal-content">
+            <span class="close" on:click={closeCreateSectionModal}>&times;</span>
+            <h2 class="formablack">Create New Section</h2>
+            <form on:submit={addSection}>
+                <label class="formablack" for="section_name">Имя раздела:</label>
+                <input type="text" name="section_name" id="section_name" required>
+                <button type="submit">Name section</button>
+            </form>
+        </div>
+    </div>
+
+    
     <!--Добавление шага-->
     <div id="add-step-form-container" style="display: none;">
         <h2>Add Step:</h2>
