@@ -195,6 +195,33 @@ def create_app():
 
         return jsonify({"status": "success", "message": "Step added successfully","updated_project": updated_project})
 
+    @app.route("/edit_project/<project_id>/add_subsection_step", methods=["POST"])
+    def add_subsection_step(project_id):
+        try:
+            project_id = ObjectId(project_id)
+        except Exception as e:
+            return "Invalid project_id", 400
+
+        section_name = request.form.get("section_name")
+        subsection_name = request.form.get("subsection_name")
+        step_description = request.form.get("step_description")
+
+        try:
+            result = app.db.projects.update_one(
+                {"_id": project_id, "sections.name": section_name},
+                {"$push": {"sections.$.subsections.$[s].cells": {"description": step_description}}},
+                array_filters=[{"s.name": subsection_name}]
+            )
+            if result.modified_count == 0:
+                return "Section or subsection not found in the project", 404
+        except Exception as e:
+            print("Error:", e)
+            return "An error occurred", 500
+
+        updated_project = app.db.projects.find_one({"_id": project_id})
+        updated_project['_id'] = str(updated_project['_id'])
+
+        return jsonify({"status": "success", "message": "Step added successfully", "updated_project": updated_project})
 
     @app.route("/edit_project/<project_id>/delete_step", methods=["POST"])
     def delete_step(project_id):
