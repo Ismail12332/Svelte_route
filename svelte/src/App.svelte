@@ -1,9 +1,9 @@
 <script>
-  import { Router, Route, Link, } from "svelte-navigator";
+    import { Router, Route, Link, } from "svelte-navigator";
 	import Glav from "./views/Glav.svelte";
 	import Login from "./Login.svelte";
 	import { onMount } from "svelte";
-  import EditProject from "./EditProject.svelte"
+    import EditProject from "./EditProject.svelte"
 
 	//let showModal = false;
 	//let isLoggedIn = localStorage.getItem('user_id'); // Check if the user is logged in

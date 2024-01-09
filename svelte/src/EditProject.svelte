@@ -882,6 +882,14 @@ function showSafetyEquipmentSections() {
 </script>
 
 <style>
+
+    main {
+        width: 100%;
+        height: 1200px;
+        color: rgb(255, 255, 255);
+        background: linear-gradient(to bottom, #011a2b, #011529);
+    }
+
     .top {
     display: flex;
     justify-content: space-evenly;
@@ -948,6 +956,14 @@ button {
     cursor: pointer;
 }
 
+h3 {
+    color: #000000;
+}
+
+.formablack {
+    color: #000000;
+}
+
 </style>
 
 
@@ -955,7 +971,6 @@ button {
 <main>
     {#if $project}
     <h1 class="sitename">Survzilla</h1>
-    <h1>{$project.first_name}</h1>
     <Link to="/glav" class="btn btn-danger">Выйти из проекта</Link><!-- кнопка перехода на страницу создания проектов -->
     <div class="top">
         <h1>Edit Project: { $project.first_name } { $project.last_name } vessel name: { $project.vessel_name }</h1>
@@ -979,7 +994,7 @@ button {
         <div id="createSubsectionModal" class="modal">
             <div class="modal-content">
                 <span class="close" on:click={() => closeCreateSubsectionModal()}>&times;</span>
-                <h2 class="formablack">Create New Subsection</h2>
+                <h3 class="formablack" color="black">Create New Subsection</h3>
                 <form on:submit|preventDefault={() => addSubsection(currentSection)}>
                     <input type="hidden" bind:value={currentSection} />
                     <label class="formablack" for="subsection_name">Имя подраздела:</label>
@@ -1150,7 +1165,7 @@ button {
     <div id="createSectionModal" class="modal">
         <div class="modal-content">
             <span class="close" on:click={closeCreateSectionModal}>&times;</span>
-            <h2 class="formablack">Create New Section</h2>
+            <h3 class="formablack" color="black">Create New Section</h3>
             <form on:submit={addSection}>
                 <label class="formablack" for="section_name">Имя раздела:</label>
                 <input type="text" name="section_name" id="section_name" required>

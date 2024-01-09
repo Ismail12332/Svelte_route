@@ -41,6 +41,18 @@
         if (response.ok) {
             const data = await response.json();
             if (data.status === 'success') {
+                // Update the projects store with the newly created project
+                projects.update(existingProjects => [...existingProjects, {
+                    _id: data.project_id,
+                    first_name: $first_name,
+                    last_name: $last_name,
+                    city: $city,
+                    phone: $phone,
+                    post: $post,
+                    vessel_name: $vessel_name,
+                    created_at: new Date().toISOString(),  // Update with the current date/time
+                    user_id: user_id,
+                }]);
                 // Notify the parent component about the successful project creation
                 dispatch('projectCreated', { project_id: data.project_id });
             } else {

@@ -45,6 +45,13 @@
             console.error('Failed to authenticate.');
         }
     };
+
+    function onSignIn(googleUser) {
+        // This function is called when the user signs in using Google.
+        var id_token = googleUser.getAuthResponse().id_token;
+        // Send the id_token to your backend for verification.
+        // Handle the authentication on the server-side.
+    }
 </script>
 
 <head>
@@ -67,6 +74,7 @@
 
             <button type="submit">Sign in</button>
         </form>
+        <div class="google-sign-in" on:click={onSignIn}></div>
         <button class="for-fxod" on:click={() => (showModal = true)}>Register</button>
                 {#if showModal}
                     <Register on:close={() => (showModal = false)} />

@@ -5,7 +5,6 @@ from bson import ObjectId
 from datetime import datetime
 from dotenv import load_dotenv
 from flask_cors import CORS,cross_origin
-from werkzeug.utils import secure_filename
 import secrets
 
 load_dotenv()
