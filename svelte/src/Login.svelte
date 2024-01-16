@@ -46,12 +46,37 @@
         }
     };
 
-    function onSignIn(googleUser) {
-        // This function is called when the user signs in using Google.
-        var id_token = googleUser.getAuthResponse().id_token;
-        // Send the id_token to your backend for verification.
-        // Handle the authentication on the server-side.
-    }
+    const handleGoogleLogin = async (event) => {
+        try {
+            event.preventDefault();
+
+            const response = await fetch('http://127.0.0.1:5000/login', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === 'success') {
+                    // Save user ID or authentication token to localStorage
+                    localStorage.setItem('user_id', data.user_id);
+                    console.log(data.user_id);
+
+                    // Notify the parent component about the successful login
+                    dispatch('loginSuccess', { user_id: data.user_id });
+                    navigate('/glav');
+                } else {
+                    console.error('Incorrect username or password.');
+                }
+            } else {
+                console.error('Failed to authenticate:', response.statusText);
+            }
+        } catch (error) {
+            console.error('An error occurred during Google login:', error);
+        }
+    };
 </script>
 
 <head>
@@ -74,7 +99,7 @@
 
             <button type="submit">Sign in</button>
         </form>
-        <div class="google-sign-in" on:click={onSignIn}></div>
+        <button on:click={handleGoogleLogin}>Google Login</button>
         <button class="for-fxod" on:click={() => (showModal = true)}>Register</button>
                 {#if showModal}
                     <Register on:close={() => (showModal = false)} />

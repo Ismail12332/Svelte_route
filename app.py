@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session,jsonify
+from flask import Flask, render_template, request, redirect, url_for, session,jsonify,abort
+from authlib.integrations.flask_client import OAuth
 from pymongo import MongoClient
 from passlib.hash import bcrypt
 from bson import ObjectId
@@ -25,6 +26,52 @@ def create_app():
     app.db = client.my_database
     users_collection = app.db.users
     projects_collection = app.db.projects
+
+    # OAuth configuration
+    oauth = OAuth(app)
+    google = oauth.register(
+        name='google',
+        client_id ='13887366922-en2l9m7mbs3acje7je1pa4argoqtsapn.apps.googleusercontent.com',
+        client_secret = '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',
+        access_token_url='https://accounts.google.com/o/oauth2/token',
+        access_token_params=None,
+        authorize_url='https://accounts.google.com/o/oauth2/auth',
+        authorize_params=None,
+        api_base_url='https://www.googleapis.com/oauth2/v1/',
+        userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',  # This is only needed if using openId to fetch user info
+        client_kwargs={'scope': 'email profile'},
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
+    )
+
+
+    @app.route('/login', methods=["GET"])
+    def loginwithgoogle(supports_credentials=True):
+        redirect_uri = url_for('authorize', _external=True)
+        print('/login запрос прошел!')
+        print(google.authorize_redirect(redirect_uri))
+        return google.authorize_redirect(redirect_uri)
+
+    @app.route('/authorize', methods=["GET"])
+    def authorize(supports_credentials=True):
+        try:
+            google = oauth.create_client('google')
+            token = google.authorize_access_token()
+            resp = google.get('userinfo')
+            user_info = resp.json()
+            
+            # do something with the token and profile
+            user_id = secrets.token_urlsafe(16)
+            users_collection.insert_one({
+                "user_id": user_id,
+                "username": user_info['given_name'],
+                "email": user_info['email'],
+            })
+
+            print('/authorize запрос прошел тоже!')
+            return jsonify({"status": 'success', 'user_id': user_id})
+        except Exception as e:
+            print(f"Ошибка при авторизации: {str(e)}")
+            abort(500)  # Internal Server Error
 
 
     @app.route("/", methods=["GET", "POST"])

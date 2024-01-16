@@ -27,6 +27,7 @@
         const result = await response.text();
         console.log(result);
     };
+
 </script>
 
 <body>
@@ -44,6 +45,7 @@
 
             <button type="submit">Register</button>
         </form>
+        
         <button on:click={close}>Close</button>
     </div>
 </body>
